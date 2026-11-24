@@ -1,0 +1,422 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+
+  <title>Admin Dashboard | Blush &amp; Basics</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="dashboard.css">
+  <script type="module" src="dashboard.js"></script>
+</head>
+
+<body>
+
+<div class="admin-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <div class="sidebar-brand">
+      <div class="sidebar-logo">B&amp;B</div>
+      <div>
+        <h2>Blush &amp; Basics</h2>
+        <small>ADMINISTRATION</small>
+      </div>
+    </div>
+
+    <div class="nav-label">MAIN MENU</div>
+
+    <nav class="sidebar-nav">
+      <a href="#overview" class="nav-link active">
+        <span class="nav-icon">⌂</span>
+        <span class="nav-text">Overview</span>
+      </a>
+
+      <a href="#products" class="nav-link">
+        <span class="nav-icon">▣</span>
+        <span class="nav-text">Products</span>
+      </a>
+
+      <a href="#categories" class="nav-link">
+        <span class="nav-icon">▤</span>
+        <span class="nav-text">Categories</span>
+      </a>
+
+      <a href="#orders" class="nav-link">
+        <span class="nav-icon">🛍</span>
+        <span class="nav-text">Orders</span>
+      </a>
+
+      <a href="#customers" class="nav-link">
+        <span class="nav-icon">♙</span>
+        <span class="nav-text">Customers</span>
+      </a>
+
+      <a href="#analytics" class="nav-link">
+        <span class="nav-icon">▥</span>
+        <span class="nav-text">Analytics</span>
+      </a>
+    </nav>
+
+    <div class="nav-label">PREFERENCES</div>
+
+    <nav class="sidebar-nav">
+      <a href="#settings" class="nav-link">
+        <span class="nav-icon">⚙</span>
+        <span class="nav-text">Settings</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <p>Blush &amp; Basics</p>
+      <p>Store administration</p>
+      <button class="logout-btn" id="logoutBtn" type="button" hidden>
+        Sign out
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+
+    <header class="topbar">
+
+      <div class="page-heading">
+        <h1>Dashboard Overview</h1>
+        <p id="status">Checking administrator access...</p>
+      </div>
+
+      <div class="admin-profile">
+        <div class="profile-avatar">A</div>
+        <div class="profile-info">
+          <strong>Administrator</strong>
+          <small>Store manager</small>
+        </div>
+      </div>
+
+    </header>
+
+    <!-- OVERVIEW -->
+    <section id="overview">
+
+      <h2 class="section-heading">Store Overview</h2>
+
+      <div class="stats-grid">
+
+        <article class="stat-card">
+          <p>Total Products</p>
+          <h3>—</h3>
+          <span class="stat-note">Awaiting database connection</span>
+        </article>
+
+        <article class="stat-card">
+          <p>Total Orders</p>
+          <h3>—</h3>
+          <span class="stat-note">Awaiting database connection</span>
+        </article>
+
+        <article class="stat-card">
+          <p>Total Customers</p>
+          <h3>—</h3>
+          <span class="stat-note">Awaiting database connection</span>
+        </article>
+
+        <article class="stat-card">
+          <p>Total Revenue</p>
+          <h3>—</h3>
+          <span class="stat-note">Awaiting payment data</span>
+        </article>
+
+      </div>
+
+    </section>
+
+    <!-- MANAGEMENT PANELS -->
+    <h2 class="section-heading">Store Management</h2>
+
+    <div class="dashboard-grid">
+
+    <section class="panel" id="products">
+
+      <div class="section-heading">
+        <div>
+          <h2>Product Management</h2>
+          <p>Manage products, prices, variations and stock.</p>
+        </div>
+
+        <button type="button" class="primary-btn" id="showProductForm">
+          + Add Product
+        </button>
+      </div>
+
+      <form id="productForm" class="category-form" hidden>
+
+        <h3 id="productFormTitle">Add a New Product</h3>
+
+        <label for="productName">Product Name</label>
+        <input type="text" id="productName" required>
+
+        <label for="productCategory">Category</label>
+        <select id="productCategory" required>
+          <option value="">Select category</option>
+        </select>
+
+        <label for="productGender">Gender</label>
+        <select id="productGender" required>
+          <option value="all">All</option>
+          <option value="women">Women</option>
+          <option value="men">Men</option>
+        </select>
+
+        <label for="productDescription">Description</label>
+        <textarea id="productDescription" rows="4"></textarea>
+
+        <label for="productPrice">Price (KSh)</label>
+        <input type="number" id="productPrice" min="0" step="0.01" required>
+
+        <label for="productComparePrice">Compare-at Price (KSh)</label>
+        <input type="number" id="productComparePrice" min="0" step="0.01">
+
+        <label for="productStock">Available Stock (Quantity)</label>
+        <input
+          type="number"
+          id="productStock"
+          min="0"
+          step="1"
+          value="0"
+          required
+        >
+        <small>Enter the number of units currently available.</small>
+
+        <label for="productImage">Product Image</label>
+        <input
+          type="file"
+          id="productImage"
+          accept="image/jpeg,image/png,image/webp"
+        >
+        <small>Accepted formats: JPG, PNG and WEBP. Maximum size: 5 MB.</small>
+
+        <label for="productType">Variation Type</label>
+        <select id="productType" required>
+          <option value="clothing">Clothing sizes</option>
+          <option value="bra">Bra / Lingerie set sizes</option>
+          <option value="one-size">One size</option>
+        </select>
+
+        <div id="braSizeFields" hidden>
+
+          <label for="productBandSizes">Band Sizes</label>
+          <select id="productBandSizes" multiple>
+            <option>30</option>
+            <option>32</option>
+            <option>34</option>
+            <option>36</option>
+            <option>38</option>
+            <option>40</option>
+            <option>42</option>
+            <option>44</option>
+            <option>46</option>
+            <option>48</option>
+            <option>50</option>
+            <option>52</option>
+            <option>54</option>
+          </select>
+
+          <label for="productCupSizes">Cup Sizes</label>
+          <select id="productCupSizes" multiple>
+            <option>AA</option>
+            <option>A</option>
+            <option>B</option>
+            <option>C</option>
+            <option>D</option>
+            <option>DD</option>
+            <option>E</option>
+            <option>F</option>
+            <option>G</option>
+            <option>H</option>
+            <option>I</option>
+            <option>J</option>
+          </select>
+
+          <small>Hold Ctrl (Windows) while selecting multiple sizes.</small>
+
+        </div>
+
+        <div id="clothingSizeFields">
+
+          <label for="productClothingSizes">Clothing Sizes</label>
+          <select id="productClothingSizes" multiple>
+            <option>S</option>
+            <option>M</option>
+            <option>L</option>
+            <option>XL</option>
+            <option>XXL</option>
+            <option>XXXL</option>
+          </select>
+
+          <small>Hold Ctrl (Windows) while selecting multiple sizes.</small>
+
+        </div>
+
+        <label for="productColors">Available Colours</label>
+        <input
+          type="text"
+          id="productColors"
+          placeholder="Black, White, Pink"
+        >
+
+        <label>
+          <input type="checkbox" id="productBestSeller">
+          Mark as Best Seller
+        </label>
+
+        <label>
+          <input type="checkbox" id="productActive" checked>
+          Active Product
+        </label>
+
+        <div class="form-actions">
+
+          <button type="submit" class="primary-btn" id="saveProductBtn">
+            Save Product
+          </button>
+
+          <button type="button" class="cancel-btn" id="cancelProductForm">
+            Cancel
+          </button>
+
+        </div>
+
+        <p id="productFormMessage" role="status"></p>
+
+      </form>
+
+      <div id="productList" class="category-list">
+        <div class="empty-state">
+          Product list will appear here.
+        </div>
+      </div>
+
+    </section>
+
+      <section class="panel" id="orders">
+        <h2>Recent Orders</h2>
+        <p>Monitor customer purchases and order fulfilment.</p>
+
+        <div class="empty-state">
+          <p>No order information loaded yet.</p>
+          <span>Order management will be connected next.</span>
+        </div>
+      </section>
+
+      
+      <section class="panel" id="categories">
+        <div class="section-heading">
+          <div>
+            <h2>Categories</h2>
+            <p>Manage your store's product categories.</p>
+          </div>
+
+          <button type="button" class="primary-btn" id="showCategoryForm">
+            + Add Category
+          </button>
+        </div>
+
+        <form id="categoryForm" class="category-form" hidden>
+          <h3>Add a New Category</h3>
+
+          <label for="categoryName">Category Name</label>
+          <input
+            type="text"
+            id="categoryName"
+            placeholder="e.g. Women's Bras"
+            required
+          >
+
+          <label for="categoryGender">Gender</label>
+          <select id="categoryGender" required>
+            <option value="all">All</option>
+            <option value="women">Women</option>
+            <option value="men">Men</option>
+          </select>
+
+          <label for="categoryImage">Category Image</label>
+          <input
+            type="file"
+            id="categoryImage"
+            accept="image/jpeg,image/png,image/webp"
+          >
+
+          <label for="categoryOrder">Display Order</label>
+          <input
+            type="number"
+            id="categoryOrder"
+            value="0"
+            min="0"
+          >
+
+          <div class="form-actions">
+            <button type="submit" class="primary-btn" id="saveCategoryBtn">
+              Save Category
+            </button>
+
+            <button type="button" class="cancel-btn" id="cancelCategoryForm">
+              Cancel
+            </button>
+          </div>
+
+          <p id="categoryFormMessage" role="status"></p>
+        </form>
+
+        <div id="categoryList" class="category-list">
+          <div class="empty-state">
+            Loading categories...
+          </div>
+        </div>
+      </section>
+
+
+      <section class="panel" id="customers">
+        <h2>Customer Management</h2>
+        <p>View and manage registered store customers.</p>
+
+        <div class="empty-state">
+          <p>Customer information will appear here.</p>
+        </div>
+      </section>
+
+      <section class="panel" id="analytics">
+        <h2>Sales Analytics</h2>
+        <p>Understand your store's sales and performance.</p>
+
+        <div class="empty-state">
+          <p>Sales reports and charts will appear here.</p>
+        </div>
+      </section>
+
+      <section class="panel" id="settings">
+        <h2>Store Settings</h2>
+        <p>Manage your store's administration settings.</p>
+
+        <div class="empty-state">
+          <p>Store settings tools will appear here.</p>
+        </div>
+      </section>
+
+    </div>
+
+  </main>
+
+</div>
+
+</body>
+</html>
