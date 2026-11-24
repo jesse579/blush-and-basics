@@ -3,11 +3,11 @@ import { supabase } from "./admin/supabase-config.js";
 /* ===== EDIT THIS SECTION ===== */
 
 const CONFIG = {
-  brand: "Blush & Basics",
-  announcement: "Welcome to Blush & Basics — Quality Comfort, Everyday Confidence.",
+  brand: "CozyMax Initmates",
+  announcement: "Welcome to CozyMax Intimates — Quality Comfort, Everyday Confidence.",
   whatsapp: "254705299563", // Country code, no leading 0, no spaces
-  phone: "0705299563", email: "hello@example.com (placeholder)", location: "Your town, Kenya (placeholder)",
-  social: { Instagram: "", TikTok: "", Facebook: "" } // paste full URLs; empty ones are hidden
+  phone: "0705299563", email: "ngahujesse@gmail.com", location: "Ongata Rongai, Kenya",
+  social: { Instagram: "https://www.instagram.com/cozymaxintimates", TikTok: "", Facebook: "" } // paste full URLs; empty ones are hidden
 };
 const CATS = [
   { id: "bras", name: "Women's Bras", cap: "Support with all-day comfort", g: "women", img:"assets/brasC.jpeg" },
