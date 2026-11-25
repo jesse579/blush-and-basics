@@ -46,6 +46,157 @@ function art(cat, color = "Burgundy", bg = "#f6e1df") {
   return "data:image/svg+xml," + encodeURIComponent(svg);
 }
 const imgOf = (p, c) => p.img || art(p.cat, c || p.colors[0]);
+
+/* ===== PRODUCT IMAGE GALLERY ===== */
+
+let galleryProduct = null;
+let galleryImages = [];
+let galleryIndex = 0;
+let touchStartX = 0;
+
+function getProductImages(p) {
+    const images = [
+        p.img,
+        ...(Array.isArray(p.images) ? p.images : [])
+    ].filter(Boolean);
+
+    return [...new Set(images)];
+}
+
+function createProductGallery() {
+    if (document.querySelector("#productGallery")) return;
+
+    document.body.insertAdjacentHTML("beforeend", `
+        <div id="productGallery" class="product-gallery"
+             aria-hidden="true">
+
+            <button class="gallery-close" aria-label="Close gallery">
+                &times;
+            </button>
+
+            <button class="gallery-prev" aria-label="Previous image">
+                &#10094;
+            </button>
+
+            <div class="gallery-content">
+                <img class="gallery-main" src="" alt="Product image">
+
+                <div class="gallery-counter"></div>
+
+                <div class="gallery-thumbnails"></div>
+            </div>
+
+            <button class="gallery-next" aria-label="Next image">
+                &#10095;
+            </button>
+        </div>
+    `);
+
+    const gallery = document.querySelector("#productGallery");
+
+    gallery.querySelector(".gallery-close").onclick = closeGallery;
+    gallery.querySelector(".gallery-prev").onclick = () => changeGallery(-1);
+    gallery.querySelector(".gallery-next").onclick = () => changeGallery(1);
+
+    gallery.addEventListener("click", e => {
+        if (e.target === gallery) closeGallery();
+    });
+
+    gallery.addEventListener("touchstart", e => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    gallery.addEventListener("touchend", e => {
+        const difference = e.changedTouches[0].screenX - touchStartX;
+
+        if (Math.abs(difference) > 50) {
+            changeGallery(difference < 0 ? 1 : -1);
+        }
+    }, { passive: true });
+}
+
+function openGallery(p) {
+    galleryProduct = p;
+    galleryImages = getProductImages(p);
+    galleryIndex = 0;
+
+    if (!galleryImages.length) return;
+
+    createProductGallery();
+
+    const gallery = document.querySelector("#productGallery");
+    gallery.classList.add("open");
+    gallery.setAttribute("aria-hidden", "false");
+
+    document.body.style.overflow = "hidden";
+
+    updateGallery();
+}
+
+function updateGallery() {
+    const gallery = document.querySelector("#productGallery");
+    const main = gallery.querySelector(".gallery-main");
+    const thumbnails = gallery.querySelector(".gallery-thumbnails");
+
+    main.src = galleryImages[galleryIndex];
+    main.alt = galleryProduct.name + " - Image " + (galleryIndex + 1);
+
+    gallery.querySelector(".gallery-counter").textContent =
+        `${galleryIndex + 1} / ${galleryImages.length}`;
+
+    thumbnails.innerHTML = galleryImages.map((url, index) => `
+        <button class="gallery-thumb ${index === galleryIndex ? "active" : ""}"
+                aria-label="View image ${index + 1}"
+                data-index="${index}">
+            <img src="${url}" alt="">
+        </button>
+    `).join("");
+
+    thumbnails.querySelectorAll("button").forEach(button => {
+        button.onclick = () => {
+            galleryIndex = Number(button.dataset.index);
+            updateGallery();
+        };
+    });
+
+    gallery.querySelector(".gallery-prev").hidden =
+        galleryImages.length < 2;
+
+    gallery.querySelector(".gallery-next").hidden =
+        galleryImages.length < 2;
+}
+
+function changeGallery(direction) {
+    if (galleryImages.length < 2) return;
+
+    galleryIndex =
+        (galleryIndex + direction + galleryImages.length)
+        % galleryImages.length;
+
+    updateGallery();
+}
+
+function closeGallery() {
+    const gallery = document.querySelector("#productGallery");
+
+    if (!gallery) return;
+
+    gallery.classList.remove("open");
+    gallery.setAttribute("aria-hidden", "true");
+
+    document.body.style.overflow = "";
+}
+
+document.addEventListener("keydown", e => {
+    const gallery = document.querySelector("#productGallery.open");
+
+    if (!gallery) return;
+
+    if (e.key === "Escape") closeGallery();
+    if (e.key === "ArrowRight") changeGallery(1);
+    if (e.key === "ArrowLeft") changeGallery(-1);
+});
+
 const fallback = e => { e.onerror = null; e.src = art(e.dataset.cat || "panties"); };
 const state = { q:"", cat:"", size:"", sort:"featured", group:"" };
 let cart = []; try { cart = JSON.parse(localStorage.getItem("bb_cart")) || []; } catch (e) {}
@@ -119,8 +270,28 @@ function card(p) {
     </div>
   `;
 
-  const img = c.querySelector("img");
+  const img = c.querySelector(".im img");
+
   img.onerror = () => fallback(img);
+
+  const imageContainer = c.querySelector(".im");
+
+  imageContainer.style.cursor = "zoom-in";
+  imageContainer.setAttribute("role", "button");
+  imageContainer.setAttribute("tabindex", "0");
+  imageContainer.setAttribute(
+      "aria-label",
+      `View images of ${p.name}`
+  );
+
+  imageContainer.onclick = () => openGallery(p);
+
+  imageContainer.onkeydown = e => {
+      if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openGallery(p);
+      }
+  };
 
   const [sz, co] = c.querySelectorAll("select");
 
@@ -390,6 +561,7 @@ async function loadProducts() {
       sizes,
       colors,
       image_url,
+      images,
       stock,
       is_active,
       is_best_seller,
@@ -420,6 +592,7 @@ async function loadProducts() {
     best: row.is_best_seller ? 1 : 0,
     desc: row.description || "",
     img: row.image_url || "",
+    images: row.images || [],
     stock: row.stock,
     created_at: row.created_at
   }));
