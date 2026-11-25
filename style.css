@@ -296,3 +296,18 @@ details{border-bottom:1px solid var(--line);padding:14px 0}summary{cursor:pointe
     .gallery-prev { left: 8px; }
     .gallery-next { right: 8px; }
 }
+
+.gallery-main {
+    display: block;
+    max-width: 100%;
+    max-height: 75vh;
+    object-fit: contain;
+}
+
+.product-gallery {
+    overflow: hidden;
+}
+
+.gallery-thumbnails {
+    scrollbar-width: thin;
+}

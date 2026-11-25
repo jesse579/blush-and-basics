@@ -197,13 +197,18 @@
         >
         <small>Enter the number of units currently available.</small>
 
-        <label for="productImage">Product Image</label>
+        <label for="productImage">Product Images</label>
         <input
           type="file"
           id="productImage"
           accept="image/jpeg,image/png,image/webp"
+          multiple
         >
-        <small>Accepted formats: JPG, PNG and WEBP. Maximum size: 5 MB.</small>
+        <small>
+          Select multiple images. Accepted formats: JPG, PNG and WEBP.
+          Maximum size: 5 MB per image.
+          The first uploaded image will be the main product image.
+        </small>
 
         <label for="productType">Variation Type</label>
         <select id="productType" required>

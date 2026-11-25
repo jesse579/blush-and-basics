@@ -3,7 +3,7 @@ import { supabase } from "./admin/supabase-config.js";
 /* ===== EDIT THIS SECTION ===== */
 
 const CONFIG = {
-  brand: "CozyMax Initmates",
+  brand: "CozyMax Intimates",
   announcement: "Welcome to CozyMax Intimates — Quality Comfort, Everyday Confidence.",
   whatsapp: "254705299563", // Country code, no leading 0, no spaces
   phone: "0705299563", email: "ngahujesse@gmail.com", location: "Ongata Rongai, Kenya",

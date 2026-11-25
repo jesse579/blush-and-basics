@@ -22,6 +22,7 @@ const productList = document.querySelector('#productList');
 // Tracks the product currently being edited
 let editingProductId = null;
 let editingProductImageUrl = null;
+let editingProductImages = [];
 const showProductForm = document.querySelector('#showProductForm');
 const cancelProductForm = document.querySelector('#cancelProductForm');
 
@@ -53,14 +54,45 @@ showProductForm.addEventListener('click', () => {
 // Hide product form
 cancelProductForm.addEventListener('click', () => {
   productForm.reset();
+
+  editingProductId = null;
+  editingProductImageUrl = null;
+  editingProductImages = [];
+
+  productFormMessage.textContent = '';
+  saveProductBtn.textContent = 'Save Product';
+
   productForm.hidden = true;
   showProductForm.hidden = false;
-});
 
+  updateSizeFields();
+});
 
 const productType = document.querySelector('#productType');
 const braSizeFields = document.querySelector('#braSizeFields');
 const clothingSizeFields = document.querySelector('#clothingSizeFields');
+
+function getProductStoragePath(url) {
+  try {
+    const imageUrl = new URL(url);
+
+    const marker =
+      '/storage/v1/object/public/category-images/';
+
+    const markerIndex = imageUrl.pathname.indexOf(marker);
+
+    if (markerIndex === -1) return null;
+
+    const path = decodeURIComponent(
+      imageUrl.pathname.slice(markerIndex + marker.length)
+    );
+
+    return path.startsWith('products/') ? path : null;
+
+  } catch {
+    return null;
+  }
+}
 
 // Show the appropriate size fields
 function updateSizeFields() {
@@ -238,6 +270,7 @@ async function loadProducts() {
       sizes,
       colors,
       image_url,
+      images,
       stock,
       is_active,
       is_best_seller,
@@ -349,34 +382,28 @@ async function loadProducts() {
 
             if (deleteError) throw deleteError;
 
-            // Remove the associated image from Supabase Storage.
-            
-            if (product.image_url) {
-              const imageUrl = new URL(product.image_url);
-              const marker = '/storage/v1/object/public/category-images/';
-              const markerIndex = imageUrl.pathname.indexOf(marker);
+            // Remove all associated product images from Supabase Storage.
+            const allImageUrls = [
+              product.image_url,
+              ...(Array.isArray(product.images) ? product.images : [])
+            ].filter(Boolean);
 
-              if (markerIndex !== -1) {
-                const imagePath = decodeURIComponent(
-                  imageUrl.pathname.slice(markerIndex + marker.length)
+            const imagePaths = [
+              ...new Set(allImageUrls.map(getProductStoragePath).filter(Boolean))
+            ];
+
+            if (imagePaths.length > 0) {
+              const { error: storageError } = await supabase.storage
+                .from('category-images')
+                .remove(imagePaths);
+
+              if (storageError) {
+                console.error('Image cleanup error:', storageError);
+
+                alert(
+                  'Product deleted, but some images could not be removed: ' +
+                  storageError.message
                 );
-                
-                
-                
-                if (imagePath.startsWith('products/')) {
-                  const { error: storageError } = await supabase.storage
-                    .from('category-images')
-                    .remove([imagePath]);
-                    
-
-                  if (storageError) {
-                    console.error('Image cleanup error:', storageError);
-                    alert(
-                      'Product deleted, but its image could not be removed from storage: ' +
-                      storageError.message
-                    );
-                  }
-                }
               }
             }
 
@@ -642,6 +669,10 @@ function startEditingProduct(product) {
   editingProductId = product.id;
   editingProductImageUrl = product.image_url;
 
+  editingProductImages = Array.isArray(product.images)
+    ? [...product.images]
+    : (product.image_url ? [product.image_url] : []);
+
   // Open the product form
   productForm.hidden = false;
   showProductForm.hidden = true;
@@ -723,7 +754,7 @@ productForm.addEventListener('submit', async (event) => {
     ? null
     : Number(productComparePrice.value);
 
-  const imageFile = productImage.files[0];
+  const imageFiles = Array.from(productImage.files);
   const type = productType.value;
 
   // Validate product details.
@@ -740,26 +771,26 @@ productForm.addEventListener('submit', async (event) => {
   }
 
   // Validate image.
-  if (imageFile) {
-    const allowedTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/webp'
-    ];
+// Validate all selected product images.
+  const allowedTypes = [
+    'image/jpeg',
+    'image/png',
+    'image/webp'
+  ];
 
+  for (const imageFile of imageFiles) {
     if (!allowedTypes.includes(imageFile.type)) {
       productFormMessage.textContent =
-        'Please select a JPG, PNG or WEBP image.';
+        'Please select only JPG, PNG or WEBP images.';
       return;
     }
 
     if (imageFile.size > 5 * 1024 * 1024) {
       productFormMessage.textContent =
-        'Image size must not exceed 5 MB.';
+        'Each image must not exceed 5 MB.';
       return;
     }
   }
-
   // Collect available sizes.
   let sizes = [];
 
@@ -826,40 +857,62 @@ productForm.addEventListener('submit', async (event) => {
       .replace(/^-|-$/g, '')
       + '-' + crypto.randomUUID().slice(0, 8);
 
-    let imageUrl = editingProductId
-      ? editingProductImageUrl
-      : null;
+        let imageUrl = editingProductId
+          ? editingProductImageUrl
+          : null;
 
-    // Upload the product image.
-    if (imageFile) {
-      saveProductBtn.textContent = 'Uploading Image...';
+        let imageUrls = editingProductId
+          ? [...editingProductImages]
+          : [];
 
-      const extension = {
-        'image/jpeg': 'jpg',
-        'image/png': 'png',
-        'image/webp': 'webp'
-      }[imageFile.type];
+        // Keep the main image in the gallery, including for older products.
+        if (imageUrl && !imageUrls.includes(imageUrl)) {
+          imageUrls.unshift(imageUrl);
+        }
 
-      const filePath =
-        `products/${slug}/${crypto.randomUUID()}.${extension}`;
+        // Upload all newly selected product images.
+        if (imageFiles.length > 0) {
+          imageUrls = imageUrls.filter(Boolean);
 
-      const { error: uploadError } = await supabase.storage
-        .from('category-images')
-        .upload(filePath, imageFile, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: imageFile.type
-        });
+          for (let i = 0; i < imageFiles.length; i++) {
+            const imageFile = imageFiles[i];
 
-      if (uploadError) throw uploadError;
+            saveProductBtn.textContent =
+              `Uploading image ${i + 1} of ${imageFiles.length}...`;
 
-      const { data: publicUrlData } = supabase.storage
-        .from('category-images')
-        .getPublicUrl(filePath);
+            const extension = {
+              'image/jpeg': 'jpg',
+              'image/png': 'png',
+              'image/webp': 'webp'
+            }[imageFile.type];
 
-      imageUrl = publicUrlData.publicUrl;
-    }
+            const filePath =
+              `products/${slug}/${crypto.randomUUID()}.${extension}`;
 
+            const { error: uploadError } = await supabase.storage
+              .from('category-images')
+              .upload(filePath, imageFile, {
+                cacheControl: '3600',
+                upsert: false,
+                contentType: imageFile.type
+              });
+
+            if (uploadError) throw uploadError;
+
+            const { data: publicUrlData } = supabase.storage
+              .from('category-images')
+              .getPublicUrl(filePath);
+
+            const uploadedUrl = publicUrlData.publicUrl;
+
+            imageUrls.push(uploadedUrl);
+
+            // The first image becomes the main image if one doesn't exist.
+            if (!imageUrl) {
+              imageUrl = uploadedUrl;
+            }
+          }
+        }   
     // Save product information.
     saveProductBtn.textContent = 'Saving Product Details...';
 
@@ -873,6 +926,7 @@ productForm.addEventListener('submit', async (event) => {
       sizes,
       colors,
       image_url: imageUrl,
+      images: imageUrls,
       stock,
       is_active: productActive.checked,
       is_best_seller: productBestSeller.checked
@@ -914,6 +968,7 @@ productForm.addEventListener('submit', async (event) => {
 
     editingProductId = null;
     editingProductImageUrl = null;
+    editingProductImages = [];
 
     saveProductBtn.textContent = 'Save Product';
 
