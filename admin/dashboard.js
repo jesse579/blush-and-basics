@@ -24,6 +24,7 @@ let editingProductId = null;
 let editingProductImageUrl = null;
 let editingProductImages = [];
 let editingOriginalProductImages = [];
+let editingProductSlug = null;
 const showProductForm = document.querySelector('#showProductForm');
 const cancelProductForm = document.querySelector('#cancelProductForm');
 
@@ -59,6 +60,7 @@ cancelProductForm.addEventListener('click', () => {
   productForm.reset();
 
   editingProductId = null;
+  editingProductSlug = null;
   editingProductImageUrl = null;
   editingProductImages = [];
 
@@ -347,6 +349,7 @@ async function loadProducts() {
     .from('products')
     .select(`
       id,
+      slug,
       name,
       category_id,
       gender,
@@ -753,6 +756,7 @@ async function deleteCategory(category) {
 
 function startEditingProduct(product) {
   editingProductId = product.id;
+  editingProductSlug = product.slug;
   editingProductImageUrl = product.image_url;
 
   editingProductImages = Array.isArray(product.images)
@@ -942,14 +946,21 @@ productForm.addEventListener('submit', async (event) => {
   saveProductBtn.textContent = 'Saving Product...';
 
   try {
-    // Generate a unique product slug.
-    const slug = name
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      + '-' + crypto.randomUUID().slice(0, 8);
+   
+    // Reuse the existing slug when editing.
+    // Generate a new slug only when creating a product.
+    let slug = editingProductId
+      ? editingProductSlug
+      : null;
 
+    if (!slug) {
+      slug = name
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        + '-' + crypto.randomUUID().slice(0, 8);
+    }
         let imageUrl = editingProductId
           ? editingProductImageUrl
           : null;
@@ -1010,6 +1021,7 @@ productForm.addEventListener('submit', async (event) => {
     saveProductBtn.textContent = 'Saving Product Details...';
 
     const productData = {
+      slug,
       name,
       category_id: categoryId,
       gender,
@@ -1040,10 +1052,7 @@ productForm.addEventListener('submit', async (event) => {
       // Create new product
       const { error } = await supabase
         .from('products')
-        .insert({
-          ...productData,
-          slug
-        });
+        .insert(productData);
 
       saveError = error;
     }
