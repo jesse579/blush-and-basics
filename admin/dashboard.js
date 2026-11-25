@@ -23,6 +23,7 @@ const productList = document.querySelector('#productList');
 let editingProductId = null;
 let editingProductImageUrl = null;
 let editingProductImages = [];
+let editingOriginalProductImages = [];
 const showProductForm = document.querySelector('#showProductForm');
 const cancelProductForm = document.querySelector('#cancelProductForm');
 
@@ -35,6 +36,8 @@ const productPrice = document.querySelector('#productPrice');
 const productComparePrice = document.querySelector('#productComparePrice');
 const productStock = document.querySelector('#productStock');
 const productImage = document.querySelector('#productImage');
+const currentProductImages = document.querySelector('#currentProductImages');
+const productImagePreview = document.querySelector('#productImagePreview');
 const productColors = document.querySelector('#productColors');
 const productBestSeller = document.querySelector('#productBestSeller');
 const productActive = document.querySelector('#productActive');
@@ -58,6 +61,11 @@ cancelProductForm.addEventListener('click', () => {
   editingProductId = null;
   editingProductImageUrl = null;
   editingProductImages = [];
+
+  editingOriginalProductImages = [];
+
+  currentProductImages.hidden = true;
+  productImagePreview.replaceChildren();
 
   productFormMessage.textContent = '';
   saveProductBtn.textContent = 'Save Product';
@@ -94,6 +102,84 @@ function getProductStoragePath(url) {
   }
 }
 
+function renderProductImagePreview() {
+  if (!currentProductImages || !productImagePreview) return;
+
+  productImagePreview.replaceChildren();
+
+  if (editingProductImages.length === 0) {
+    currentProductImages.hidden = true;
+    return;
+  }
+
+  currentProductImages.hidden = false;
+
+  editingProductImages.forEach((url) => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'product-image-item';
+
+    const image = document.createElement('img');
+    image.src = url;
+    image.alt = 'Product image';
+    image.className = 'product-image-thumbnail';
+
+    const isMain = url === editingProductImageUrl;
+
+    const mainLabel = document.createElement('small');
+    mainLabel.textContent = isMain ? 'Main image' : 'Additional image';
+
+    const actions = document.createElement('div');
+    actions.className = 'product-image-actions';
+
+    if (!isMain) {
+      const mainButton = document.createElement('button');
+      mainButton.type = 'button';
+      mainButton.textContent = 'Set as Main';
+      mainButton.className = 'primary-btn';
+
+      mainButton.addEventListener('click', () => {
+        editingProductImageUrl = url;
+
+        // Put the main image first in the gallery.
+        editingProductImages = [
+          url,
+          ...editingProductImages.filter(imageUrl => imageUrl !== url)
+        ];
+
+        renderProductImagePreview();
+      });
+
+      actions.appendChild(mainButton);
+    }
+
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.textContent = 'Remove';
+    removeButton.className = 'delete-btn';
+
+    removeButton.addEventListener('click', () => {
+      const confirmed = confirm('Remove this image from the product?');
+
+      if (!confirmed) return;
+
+      editingProductImages = editingProductImages.filter(
+        imageUrl => imageUrl !== url
+      );
+
+      // If the main image was removed, choose the next available image.
+      if (editingProductImageUrl === url) {
+        editingProductImageUrl = editingProductImages[0] || null;
+      }
+
+      renderProductImagePreview();
+    });
+
+    actions.appendChild(removeButton);
+
+    wrapper.append(image, mainLabel, actions);
+    productImagePreview.appendChild(wrapper);
+  });
+}
 // Show the appropriate size fields
 function updateSizeFields() {
   const type = productType.value;
@@ -673,6 +759,11 @@ function startEditingProduct(product) {
     ? [...product.images]
     : (product.image_url ? [product.image_url] : []);
 
+  if (product.image_url && !editingProductImages.includes(product.image_url)) {
+    editingProductImages.unshift(product.image_url);
+  }
+
+  editingOriginalProductImages = [...editingProductImages];
   // Open the product form
   productForm.hidden = false;
   showProductForm.hidden = true;
@@ -728,6 +819,8 @@ function startEditingProduct(product) {
 
   // Clear the image input; existing image will be retained unless replaced
   productImage.value = '';
+
+  renderProductImagePreview();
 
   // Update form appearance
   saveProductBtn.textContent = 'Update Product';
@@ -957,6 +1050,35 @@ productForm.addEventListener('submit', async (event) => {
 
     if (saveError) throw saveError;
 
+    // Delete images removed during editing, but only after the
+    // updated product information has been saved successfully.
+    if (editingProductId) {
+      const removedImages = editingOriginalProductImages.filter(
+        url => !imageUrls.includes(url)
+      );
+
+      const removedPaths = [
+        ...new Set(
+          removedImages.map(getProductStoragePath).filter(Boolean)
+        )
+      ];
+
+      if (removedPaths.length > 0) {
+        const { error: storageError } = await supabase.storage
+          .from('category-images')
+          .remove(removedPaths);
+
+        if (storageError) {
+          console.error('Removed image cleanup error:', storageError);
+
+          alert(
+            'Product updated, but some removed images could not be deleted from storage: ' +
+            storageError.message
+          );
+        }
+      }
+    }
+
     productFormMessage.textContent = editingProductId
       ? 'Product updated successfully!'
       : 'Product created successfully!';
@@ -969,6 +1091,10 @@ productForm.addEventListener('submit', async (event) => {
     editingProductId = null;
     editingProductImageUrl = null;
     editingProductImages = [];
+    editingOriginalProductImages = [];
+
+    currentProductImages.hidden = true;
+    productImagePreview.replaceChildren();
 
     saveProductBtn.textContent = 'Save Product';
 
