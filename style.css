@@ -122,7 +122,7 @@ nav.open{display:flex;flex-direction:column;position:absolute;top:100%;left:0;ri
 .card .im img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
     object-position: center;
     display: block;
     transition: transform .3s ease;
@@ -301,7 +301,7 @@ details{border-bottom:1px solid var(--line);padding:14px 0}summary{cursor:pointe
     display: block;
     max-width: 100%;
     max-height: 75vh;
-    
+    object-fit: contain;
 }
 
 .product-gallery {
