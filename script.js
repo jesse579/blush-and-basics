@@ -5,7 +5,7 @@ import { supabase } from "./admin/supabase-config.js";
 const CONFIG = {
   brand: "CozyMax Intimates",
   announcement: "Welcome to CozyMax Intimates — Quality Comfort, Everyday Confidence.",
-  whatsapp: "254705299563", // Country code, no leading 0, no spaces
+  whatsapp: "254781221353", // Country code, no leading 0, no spaces
   phone: "0705299563", email: "ngahujesse@gmail.com", location: "Ongata Rongai, Kenya",
   social: { Instagram: "https://www.instagram.com/cozymaxintimates", TikTok: "", Facebook: "" } // paste full URLs; empty ones are hidden
 };
